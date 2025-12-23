@@ -529,6 +529,29 @@ Don't roll or change position.</string>
          </widget>
         </item>
         <item>
+         <widget class="Line" name="line_3">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="useGpu">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Use GPU acceleration (CUDA) when available. Falls back to CPU if CUDA is not available.</string>
+          </property>
+          <property name="text">
+           <string>Use GPU (CUDA)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="Line" name="line_2">
           <property name="orientation">
            <enum>Qt::Vertical</enum>

@@ -480,12 +480,36 @@ bool NeuralNetTracker::load_and_initialize_model()
             "tracker-neuralnet"
         };
         auto opts = Ort::SessionOptions{};
+        
+        // Try to use CUDA if enabled and available
+        bool using_gpu = false;
+        if (settings_.use_gpu)
+        {
+            try 
+            {
+                opts.AppendExecutionProvider_CUDA(OrtCUDAProviderOptions{});
+                using_gpu = true;
+                qDebug() << "neuralnet tracker: Using CUDA GPU acceleration";
+            }
+            catch (const Ort::Exception& e)
+            {
+                qDebug() << "neuralnet tracker: CUDA not available, falling back to CPU:" << e.what();
+            }
+        }
+        
+        if (!using_gpu)
+        {
+            qDebug() << "neuralnet tracker: Using CPU execution";
+        }
+        
         // Do thread settings here do anything?
         // There is a warning which says to control number of threads via
         // openmp settings. Which is what we do.
         opts.SetIntraOpNumThreads(num_threads_);
         opts.SetInterOpNumThreads(1);
-        allocator_info_ = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+        allocator_info_ = using_gpu ? 
+            Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault) :
+            Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
 
         localizer_.emplace(
             allocator_info_, 
@@ -762,6 +786,7 @@ NeuralNetDialog::NeuralNetDialog() :
     tie_setting(settings_.resolution, ui_.resolution);
     tie_setting(settings_.force_fps, ui_.cameraFPS);
     tie_setting(settings_.posenet_file, ui_.posenetFileDisplay);
+    tie_setting(settings_.use_gpu, ui_.useGpu);
 
     connect(ui_.buttonBox, SIGNAL(accepted()), this, SLOT(doOK()));
     connect(ui_.buttonBox, SIGNAL(rejected()), this, SLOT(doCancel()));
