@@ -507,9 +507,15 @@ bool NeuralNetTracker::load_and_initialize_model()
         // openmp settings. Which is what we do.
         opts.SetIntraOpNumThreads(num_threads_);
         opts.SetInterOpNumThreads(1);
-        allocator_info_ = using_gpu ? 
-            Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault) :
-            Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+        
+        if (using_gpu)
+        {
+            allocator_info_ = Ort::MemoryInfo("Cuda", OrtArenaAllocator, 0, OrtMemTypeDefault);
+        }
+        else
+        {
+            allocator_info_ = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+        }
 
         localizer_.emplace(
             allocator_info_, 
