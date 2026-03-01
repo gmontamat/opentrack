@@ -470,6 +470,28 @@ bool NeuralNetTracker::load_and_initialize_model()
         env_ = Ort::Env{ OrtLoggingLevel::ORT_LOGGING_LEVEL_ERROR, "tracker-neuralnet" };
 
         auto opts = Ort::SessionOptions{};
+
+        // Try to use CUDA if enabled and available
+        bool using_gpu = false;
+        if (settings_.use_gpu)
+        {
+            try
+            {
+                opts.AppendExecutionProvider_CUDA(OrtCUDAProviderOptions{});
+                using_gpu = true;
+                qDebug() << "neuralnet tracker: Using CUDA GPU acceleration";
+            }
+            catch (const Ort::Exception& e)
+            {
+                qDebug() << "neuralnet tracker: CUDA not available, falling back to CPU:" << e.what();
+            }
+        }
+
+        if (!using_gpu)
+        {
+            qDebug() << "neuralnet tracker: Using CPU execution";
+        }
+
         // In older versions of the ONNX-RT there is a warning which says to control number of threads via OpenMP.
         // However, recently, OpenMP support was removed. Then this setting should work.
         opts.SetIntraOpNumThreads(num_threads_);
@@ -724,6 +746,7 @@ NeuralNetDialog::NeuralNetDialog() : trans_calib_(1, 2)
     tie_setting(settings_.force_fps, ui_.cameraFPS);
     tie_setting(settings_.posenet_file, ui_.posenetFileDisplay);
     tie_setting(settings_.internal_filter_enabled, ui_.internal_filter_enabled);
+    tie_setting(settings_.use_gpu, ui_.useGpu);
 
     connect(ui_.buttonBox, SIGNAL(accepted()), this, SLOT(doOK()));
     connect(ui_.buttonBox, SIGNAL(rejected()), this, SLOT(doCancel()));
